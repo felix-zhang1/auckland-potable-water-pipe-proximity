@@ -1,0 +1,108 @@
+datasets:
+  - name: "NZ Building Outlines"
+    short_name: "nz_building_outlines"
+    provider: "LINZ"
+
+    source_type: "wfs"
+
+    base_url_template: "https://data.linz.govt.nz/services;key={api_key}/wfs/layer-101290/"
+    api_key_env: "LINZ_API_KEY"
+
+    type_name: "data.linz.govt.nz:layer-101290"
+    wfs_version: "2.0.0"
+    output_format: "application/json"
+    srs_name: "EPSG:2193"
+
+    page_size: 5000
+
+    # Stable unique building identifier used by WFS sortBy.
+    sort_by: "building_id"
+
+    filter:
+      type: "attribute"
+      field: "town_city"
+      value: "Auckland"
+
+  - name: "Urban Rural 2026 Clipped"
+    short_name: "urban_rural_2026"
+    provider: "Stats NZ"
+
+    source_type: "wfs"
+
+    base_url_template: "https://datafinder.stats.govt.nz/services;key={api_key}/wfs/layer-123505/"
+    api_key_env: "STATS_NZ_API_KEY"
+
+    type_name: "datafinder.stats.govt.nz:layer-123505"
+    wfs_version: "2.0.0"
+    output_format: "application/json"
+    srs_name: "EPSG:2193"
+
+    page_size: 1000
+
+    # Stable Urban Rural geographic code.
+    sort_by: "UR2026_V1_00"
+
+    filter:
+      type: "attribute"
+      field: "UR2026_V1_00_NAME"
+      value: "Auckland"
+
+  - name: "2023 Census totals by topic for dwellings by statistical area 1"
+    short_name: "census_2023_dwellings_sa1"
+    provider: "Stats NZ"
+
+    source_type: "wfs"
+
+    base_url_template: "https://datafinder.stats.govt.nz/services;key={api_key}/wfs/layer-120759/"
+    api_key_env: "STATS_NZ_API_KEY"
+
+    type_name: "datafinder.stats.govt.nz:layer-120759"
+    wfs_version: "2.0.0"
+    output_format: "application/json"
+    srs_name: "EPSG:2193"
+
+    page_size: 5000
+
+    # Stable Statistical Area 1 geographic code.
+    sort_by: "SA12023_V1_00"
+
+    filter:
+      type: "bbox"
+      bbox_source: "urban_rural_2026"
+
+  - name: "Water Pipe"
+    short_name: "water_pipe"
+    provider: "Watercare"
+
+    source_type: "arcgis_rest"
+
+    layer_url: >-
+      https://wslgis.water.co.nz/arcgis/rest/services/Services/WaterComb/MapServer/4
+
+    query_url: >-
+      https://wslgis.water.co.nz/arcgis/rest/services/Services/WaterComb/MapServer/4/query
+
+    # Watercare has disabled its browser-facing Services Directory.
+    # The query endpoint still works.
+    fetch_layer_metadata: false
+
+    where: "1=1"
+
+    out_fields: "*"
+
+    output_format: "json"
+
+    # BBOX coordinates use EPSG:2193.
+    srs_name: "EPSG:2193"
+    in_sr: 2193
+
+    # Returned pipe geometry also uses EPSG:2193.
+    out_sr: 2193
+
+    # Object IDs are submitted through POST request bodies.
+    page_size: 1000
+
+    filter:
+      type: "bbox"
+      bbox_source: "urban_rural_2026"
+      buffer: 0

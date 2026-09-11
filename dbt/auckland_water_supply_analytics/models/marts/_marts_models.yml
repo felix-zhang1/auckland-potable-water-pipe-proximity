@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: mart_sa1_accessibility_quadrants
+    description: >
+      Gold-layer SA1 accessibility model that combines SA1 dwelling density
+      with SA1-level building-to-water-pipe proximity metrics.
+      Median thresholds define the four-quadrant classification,
+      while 75th-percentile thresholds provide supplementary extreme-value flags.
+
+    columns:
+      - name: sa1_id
+        description: Unique Census Statistical Area 1 identifier.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: quadrant_code
+        description: >
+          Q1 to Q4 accessibility classification based on median thresholds.
+          UNCLASSIFIED indicates that one or both required analytical metrics are unavailable.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Q1
+                  - Q2
+                  - Q3
+                  - Q4
+                  - UNCLASSIFIED
+
+      - name: quadrant_name
+        description: Human-readable interpretation of the quadrant classification.
+        data_tests:
+          - not_null
+
+      - name: median_pipe_distance_threshold_m
+        description: >
+          Median of SA1-level median building-to-pipe distances,
+          calculated only from SA1s with both classification metrics available.
+        data_tests:
+          - not_null
+
+      - name: median_dwelling_density_threshold
+        description: >
+          Median dwelling density calculated only from SA1s
+          with both classification metrics available.
+        data_tests:
+          - not_null
+
+      - name: p75_pipe_distance_threshold_m
+        description: >
+          75th percentile of SA1-level median pipe distance
+          among classifiable SA1s.
+        data_tests:
+          - not_null
+
+      - name: p75_dwelling_density_threshold
+        description: >
+          75th percentile of dwelling density among classifiable SA1s.
+        data_tests:
+          - not_null
+
+      - name: is_extreme_pipe_distance
+        description: >
+          True when median pipe distance is at or above the P75 threshold.
+          Null when pipe distance is unavailable.
+
+      - name: is_extreme_dwelling_density
+        description: >
+          True when dwelling density is at or above the P75 threshold.
+          Null when dwelling density is unavailable.
+
+      - name: is_priority_quadrant
+        description: >
+          True when the SA1 is in Q4.
+          Null when the SA1 cannot be classified.

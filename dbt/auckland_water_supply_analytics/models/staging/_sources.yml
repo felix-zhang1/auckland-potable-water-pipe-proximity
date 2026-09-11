@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: water_supply_raw
+    database: AUCKLAND_WATER_SUPPLY_ANALYTICS
+    schema: RAW
+
+    tables:
+      - name: building_pipe_proximity
+        identifier: BUILDING_PIPE_PROXIMITY
+
+      - name: sa1_dwelling_density
+        identifier: SA1_DWELLING_DENSITY

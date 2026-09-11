@@ -1,0 +1,9 @@
+Python==3.12.13
+requests==2.34.2
+PyYAML==6.0.3
+python-dotenv==1.2.2
+azure-storage-blob==12.30.0
+geopandas==1.1.4
+SQLAlchemy==2.0.51
+psycopg2-binary==2.9.12
+GeoAlchemy2==0.20.0

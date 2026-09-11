@@ -1,0 +1,132 @@
+version: 2
+
+models:
+  - name: stg_building_pipe_proximity
+    description: >
+      Latest building-to-water-pipe proximity snapshot,
+      cleaned and typed for downstream analytical models.
+
+    columns:
+      - name: building_id
+        description: Unique building identifier within the latest snapshot.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: nearest_pipe_objectid
+        description: Identifier of the nearest eligible potable water pipe.
+        data_tests:
+          - not_null
+
+      - name: nearest_pipe_distance_m
+        description: Distance in metres to the nearest eligible potable water pipe.
+        data_tests:
+          - not_null
+
+      - name: analysis_created_at
+        description: Timestamp when the PostGIS analysis was created.
+        data_tests:
+          - not_null
+
+      - name: source_filename
+        description: Source CSV file path loaded by Snowpipe.
+        data_tests:
+          - not_null
+
+      - name: source_file_row_number
+        description: Original row number in the source CSV file.
+        data_tests:
+          - not_null
+
+      - name: snowpipe_loaded_at
+        description: Timestamp when Snowflake scanned the source file.
+        data_tests:
+          - not_null
+
+  - name: stg_sa1_dwelling_density
+    description: >
+      Latest SA1 occupied-dwelling density snapshot,
+      cleaned and typed for downstream analytical models.
+
+    columns:
+      - name: sa1_id
+        description: Unique Census Statistical Area 1 identifier within the latest snapshot.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: landwater
+        description: Stats NZ LANDWATER classification code.
+        data_tests:
+          - not_null
+
+      - name: land_area_sq_km
+        description: Land area of the complete SA1 in square kilometres.
+        data_tests:
+          - not_null
+
+      - name: analysis_created_at
+        description: Timestamp when the PostGIS SA1 dwelling-density analysis was created.
+        data_tests:
+          - not_null
+
+      - name: source_filename
+        description: Source CSV file path loaded by Snowpipe.
+        data_tests:
+          - not_null
+
+      - name: source_file_row_number
+        description: Original row number in the source CSV file.
+        data_tests:
+          - not_null
+
+      - name: snowpipe_loaded_at
+        description: Timestamp when Snowflake scanned the source file.
+        data_tests:
+          - not_null
+
+  - name: int_sa1_accessibility_metrics
+    description: >
+      SA1-level analytical dataset combining occupied-dwelling density
+      with aggregated building-to-water-pipe proximity metrics.
+      One row represents one SA1.
+
+    columns:
+      - name: sa1_id
+        description: Unique Census Statistical Area 1 identifier.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: land_area_sq_km
+        description: Land area of the SA1 in square kilometres.
+        data_tests:
+          - not_null
+
+      - name: dwelling_density_per_sq_km
+        description: >
+          2023 occupied dwelling count divided by SA1 land area in square
+          kilometres. May be null when the Census occupied-dwelling value
+          is unavailable.
+
+      - name: building_count
+        description: >
+          Number of building outlines assigned to the SA1 using the
+          building representative-point spatial assignment method.
+          May be null when no building representative point is assigned
+          to the SA1, even if a building polygon intersects the SA1.
+
+      - name: avg_pipe_distance_m
+        description: Mean building-to-nearest-water-pipe distance within the SA1.
+
+      - name: median_pipe_distance_m
+        description: Median building-to-nearest-water-pipe distance within the SA1.
+
+      - name: p75_pipe_distance_m
+        description: 75th percentile of building-to-nearest-water-pipe distance within the SA1.
+
+      - name: min_pipe_distance_m
+        description: Minimum building-to-nearest-water-pipe distance within the SA1.
+
+      - name: max_pipe_distance_m
+        description: Maximum building-to-nearest-water-pipe distance within the SA1.
