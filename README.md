@@ -34,18 +34,47 @@ Design and implement a traceable, reproducible, idempotent, and increasingly aut
 
 ### 1. Analytical Methodology
 
+The initial intention was to identify a **clear, deterministic metric or established threshold** that could directly translate the combination of **building-to-pipe distance** and **residential density** into different investigation-priority levels.
+
+However, I could not identify a defensible external metric that specifies, for example, that a particular pipe distance combined with a particular dwelling density should automatically correspond to a specific level of potable-water supply risk or investigation priority.
+
+Because the two variables also have different units and distributions, defining arbitrary fixed thresholds would have introduced assumptions that were difficult to justify.
+
+Therefore, instead of imposing a predetermined scoring formula, the analysis shifted to a **data-driven statistical classification approach** based on the observed distribution of the Auckland SA1 data.
+
+The analytical process is:
+
+1. Calculate the nearest eligible potable-water pipe distance for each building.
+2. Aggregate building-level distances to the SA1 level.
+3. Calculate occupied-dwelling density for each SA1.
+4. Analyse the statistical distribution of both SA1-level metrics.
+5. Use median thresholds to divide SA1s into four quadrants.
+6. Use 75th-percentile thresholds to identify more extreme conditions.
+
+#### Building-to-Pipe Distance
+
 For each building, the distance to its **nearest local potable-water distribution pipe** is calculated using the complete building footprint and pipe geometry.
 
 The building-level distances are then aggregated to the **SA1 level**, and the **median building-to-pipe distance** is calculated for each SA1.
 
-Separately, **occupied-dwelling density** is calculated for each SA1 using the 2023 Census occupied-dwelling count divided by SA1 land area.
+The median is used as the primary SA1-level proximity metric because it provides a robust representation of the typical building-to-pipe distance within each SA1 while reducing the influence of unusually large individual distances.
 
-The analysis then derives two median thresholds across all classifiable SA1s:
+#### Occupied-Dwelling Density
 
-- **Median SA1 building-to-pipe distance**
-- **Median SA1 occupied-dwelling density**
+Separately, **occupied-dwelling density** is calculated for each SA1 using the 2023 Census occupied-dwelling count divided by SA1 land area:
 
-These two thresholds define a four-quadrant classification:
+`occupied-dwelling density = occupied_dwellings_2023 / land_area_sq_km`
+
+The unit is **occupied dwellings per km²**.
+
+#### Median-Based Quadrant Classification
+
+Rather than applying unsupported absolute risk thresholds, the analysis derives two median thresholds from all classifiable SA1s:
+
+- **Median of SA1 median building-to-pipe distance**
+- **Median of SA1 occupied-dwelling density**
+
+These thresholds divide the dataset into four quadrants:
 
 | Quadrant | Dwelling Density | Median Building-to-Pipe Distance | Interpretation |
 |---|---|---|---|
@@ -54,9 +83,18 @@ These two thresholds define a four-quadrant classification:
 | Q3 | Lower | Higher | Lower density / longer pipe distance |
 | **Q4** | **Higher** | **Higher** | **Higher density / longer pipe distance** |
 
-Each classifiable SA1 is assigned to one of the four quadrants. **Q4** is treated as the primary priority group because it combines relatively high residential density with relatively long building-to-pipe distance.
+Each classifiable SA1 is assigned to one of the four quadrants according to its relative position within the Auckland urban dataset.
 
-The **75th-percentile (P75) thresholds** are then used to identify more extreme conditions:
+**Q4** is treated as the primary priority group because it combines:
+
+- relatively higher occupied-dwelling density; and
+- relatively longer median building-to-pipe distance.
+
+This classification should be interpreted as a **relative analytical screening method**, rather than a deterministic measure of actual water-supply failure risk.
+
+#### P75 Extreme-Condition Screening
+
+The **75th-percentile (P75) thresholds** are then applied as a stricter second-level screening method.
 
 | Extreme Condition | Median Building-to-Pipe Distance | Dwelling Density | Interpretation |
 |---|---|---|---|
@@ -64,8 +102,22 @@ The **75th-percentile (P75) thresholds** are then used to identify more extreme 
 | Extreme Dwelling Density | Any | ≥ P75 | SA1 has unusually high occupied-dwelling density |
 | **Both Extreme Conditions** | **≥ P75** | **≥ P75** | **SA1 has both unusually long pipe distance and unusually high dwelling density** |
 
-These P75 thresholds provide a stricter level of screening than the median-based quadrant classification. SA1s that exceed both P75 thresholds represent the project's most extreme combination of **long building-to-pipe distance** and **high residential density**.
- 
+The P75 thresholds therefore provide a stricter level of screening than the median-based quadrant classification.
+
+SA1s exceeding both P75 thresholds represent the most extreme observed combination of:
+
+- **long building-to-pipe distance**; and
+- **high occupied-dwelling density**.
+
+The methodology can therefore be summarised as:
+
+**Initial intention**  
+→ Find a deterministic distance + density priority metric  
+→ No defensible established metric identified  
+→ Analyse the observed SA1 statistical distributions  
+→ Use median thresholds to construct four quadrants  
+→ Use P75 thresholds to identify more extreme conditions
+
 ### 2. Data Engineering Methodology
 
 The pipeline is designed as a reusable **cloud-based data engineering workflow** rather than a one-off analysis.
@@ -73,17 +125,11 @@ The pipeline is designed as a reusable **cloud-based data engineering workflow**
 The main principles are:
 
 - **Layered design** — each stage has a clear responsibility across ingestion, spatial processing, cloud storage, warehousing, transformation, validation, and visualisation.
-
 - **Configuration-driven processing** — dataset sources, filters, CRS, pagination, and dependencies are defined in configuration files instead of being hard-coded.
-
 - **Reproducible processing** — spatial rules, SQL transformations, dbt models, and export logic are explicitly defined so the same inputs produce consistent results.
-
 - **Change detection and idempotency** — SHA-256 fingerprints are used to detect meaningful data changes and avoid unnecessary reprocessing of unchanged data.
-
 - **Traceability and lineage** — run IDs, timestamps, manifests, source filenames, Snowpipe metadata, and dbt lineage are retained so analytical results can be traced back to their source.
-
 - **Data-quality validation** — checks are applied throughout PostGIS and dbt to detect invalid geometries, incorrect values, duplicate records, and inconsistent analytical results.
-
 - **Use the right platform for each workload** — PostGIS handles spatial computation, Azure Blob Storage provides cloud-based data exchange between stages, and Snowflake/dbt handles analytical transformation and modelling.
 
 ---
@@ -192,8 +238,6 @@ flowchart TD
 
     K3 --> L[Power BI]
 ```
-
----
 
 ---
 
